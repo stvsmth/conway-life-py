@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
-from distutils.errors import LibError
-from typing import Any, Tuple, List, Optional
+import sys
 import time
+from typing import Tuple, List, Optional
 
 ROWS = 8
 COLS = 8
@@ -16,10 +16,10 @@ class Board:
         self.cols = cols
         self.seed = seed
         self.board = []
-        self.is_alive = True
+        self.is_over = False
 
         for _ in range(rows):
-            self.board.append([OPEN_SLOT for c in range(cols)])
+            self.board.append([OPEN_SLOT for _ in range(cols)])
 
         for coords in self.seed:
             self.set_coords(coords)
@@ -31,6 +31,7 @@ class Board:
 
         return s
 
+    # TODO(team): Do we need this method?
     def set_coords(self, coords: Tuple[int, int]) -> None:
         """Sets coords on the game board."""
         i, j = coords
@@ -48,6 +49,14 @@ class Board:
     def get_inbound_coords(
         self, coords: Tuple[int, int], directional: str
     ) -> Optional[Tuple[int, int]]:
+    #    nw 0,  0 | n 0, 1 | ne  0, 2
+    #     -1,  -1 |  -1, 0 |    -1, 1
+    #    ---------------------------
+    #     w 1,  0 | c 1, 1 |  e  1, 2
+    #       0, -1 |        |     0, 1
+    #    ---------------------------
+    #    sw 2,  0 | s 2, 1 | se  2, 2
+    #       1, -1 |   1, 0 |     1, 1
         mp = {
             "nw": (-1, -1),
             "n": (-1, 0),
@@ -80,6 +89,8 @@ class Board:
         return self.board[i][j] == LIVE_SLOT
 
 
+# TODO(team): How can the seed elements be an input parameter from CLI?
+# add `--random` param to CLI to randomize board population.
 def seed_elements() -> List[Tuple[int, int]]:
     return [
         (0, 0),
@@ -111,12 +122,15 @@ def init_board():
 
 
 def main():
+    counter = 0
     game = init_board()
-    while game.is_alive:
+    # TODO(team): Does game.is_alive ever change to False?
+    while not game.is_over:
+        counter += 1
+        game.is_over = True
         print(game)
         for i, row in enumerate(game.board):
             for j, item in enumerate(row):
-                # These is hard to read
                 neighbors = [
                     game.board[x][y]
                     for x, y in game.get_neighbors((i, j))
@@ -125,26 +139,21 @@ def main():
                 # A dead cell has exactly 3 neighbors => toggle to alive
                 if item == OPEN_SLOT and len(neighbors) == 3:
                     game.board[i][j] = LIVE_SLOT
+                    game.is_over = False
                 # A living cell has 4 or more neighbors => toggle to dead
                 elif item == LIVE_SLOT and len(neighbors) >= 4:
                     game.board[i][j] = OPEN_SLOT
+                    game.is_over = False
                 # When a living cell has 1 or fewer neighbors => toggle to dead
                 elif item == LIVE_SLOT and len(neighbors) <= 1:
                     game.board[i][j] = OPEN_SLOT
+                    game.is_over = False
 
         time.sleep(2)
         print("============================================================")
-
+    
+    print("Game exited. Your score is {}.".format(counter))
+    sys.exit(0)            
 
 if __name__ == "__main__":
     main()
-
-
-#    nw 0,  0 | n 0, 1 | ne  0, 2
-#     -1,  -1 |  -1, 0 |    -1, 1
-#    ---------------------------
-#     w 1,  0 | c 1, 1 |  e  1, 2
-#       0, -1 |        |     0, 1
-#    ---------------------------
-#    sw 2,  0 | s 2, 1 | se  2, 2
-#       1, -1 |   1, 0 |     1, 1
