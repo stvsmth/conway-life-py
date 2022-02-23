@@ -49,14 +49,17 @@ class Board:
     def get_inbound_coords(
         self, coords: Tuple[int, int], directional: str
     ) -> Optional[Tuple[int, int]]:
-    #    nw 0,  0 | n 0, 1 | ne  0, 2
-    #     -1,  -1 |  -1, 0 |    -1, 1
-    #    ---------------------------
-    #     w 1,  0 | c 1, 1 |  e  1, 2
-    #       0, -1 |        |     0, 1
-    #    ---------------------------
-    #    sw 2,  0 | s 2, 1 | se  2, 2
-    #       1, -1 |   1, 0 |     1, 1
+        """Given coords and a direction, return a legal, in-bound set of coordinates or None.
+
+        nw 0,  0 | n 0, 1 | ne  0, 2
+          -1, -1 |  -1, 0 |    -1, 1
+        ---------------------------
+         w 1,  0 | c 1, 1 |  e  1, 2
+           0, -1 |        |     0, 1
+        ---------------------------
+        sw 2,  0 | s 2, 1 | se  2, 2
+           1, -1 |   1, 0 |     1, 1
+        """
         mp = {
             "nw": (-1, -1),
             "n": (-1, 0),
@@ -124,7 +127,7 @@ def init_board():
 def main():
     counter = 0
     game = init_board()
-    # TODO(team): Does game.is_alive ever change to False?
+
     while not game.is_over:
         counter += 1
         game.is_over = True
@@ -151,9 +154,10 @@ def main():
 
         time.sleep(2)
         print("============================================================")
-    
+
     print("Game exited. Your score is {}.".format(counter))
-    sys.exit(0)            
+    sys.exit(0)
+
 
 if __name__ == "__main__":
     main()
