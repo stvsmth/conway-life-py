@@ -18,9 +18,11 @@ class Board:
         self.board = []
         self.is_over = False
 
+        # Build a blank game board
         for _ in range(rows):
             self.board.append([OPEN_SLOT for _ in range(cols)])
 
+        # Add the initial game state of living cells
         for coords in self.seed:
             self.set_coords(coords)
 
@@ -86,10 +88,6 @@ class Board:
             return None
         else:
             return neighbor_coords
-
-    def is_living(self, coords):
-        i, j = coords
-        return self.board[i][j] == LIVE_SLOT
 
 
 # TODO(team): How can the seed elements be an input parameter from CLI?
