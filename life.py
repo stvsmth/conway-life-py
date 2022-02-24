@@ -24,7 +24,8 @@ class Board:
 
         # Add the initial game state of living cells
         for coords in self.seed:
-            self.set_coords(coords)
+            i, j = coords
+            self.board[i][j] = LIVE_SLOT
 
     def __repr__(self):
         s = ""
@@ -32,12 +33,6 @@ class Board:
             s += "".join(row) + "\n"
 
         return s
-
-    # TODO(team): Do we need this method?
-    def set_coords(self, coords: Tuple[int, int]) -> None:
-        """Sets coords on the game board."""
-        i, j = coords
-        self.board[i][j] = LIVE_SLOT
 
     def get_neighbors(self, coords: Tuple[int, int]) -> List[Tuple[int, int]]:
         """Looks at neighbors in 9x9 grid and returns i, j coords for non-null neighbors"""
