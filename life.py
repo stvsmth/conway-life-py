@@ -34,7 +34,7 @@ class Board:
             s += "".join(row) + "\n"
 
         return s
-    
+
     def curses_board(self, curses_window):
         """Print board dynamically in-place using curses."""
         curses_window.erase()
@@ -117,6 +117,7 @@ def seed_elements() -> List[Tuple[int, int]]:
         (7, 4),
         (7, 7),
     ]
+
 
 def init_board():
     """Build an initial board based on ROWS / COLS"""
