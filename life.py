@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import curses
 import sys
 import time
 from typing import Tuple, List, Optional
@@ -7,7 +8,7 @@ from typing import Tuple, List, Optional
 ROWS = 8
 COLS = 8
 OPEN_SLOT = "_ "
-LIVE_SLOT = "☺ "
+LIVE_SLOT = "O "
 
 
 class Board:
@@ -33,6 +34,12 @@ class Board:
             s += "".join(row) + "\n"
 
         return s
+    
+    def curses_board(self, curses_window):
+        """Print board dynamically in-place using curses."""
+        curses_window.erase()
+        curses_window.addstr(self.__repr__())
+        curses_window.refresh()
 
     def get_neighbors(self, coords: Tuple[int, int]) -> List[Tuple[int, int]]:
         """Looks at neighbors in 9x9 grid and returns i, j coords for non-null neighbors"""
@@ -111,20 +118,19 @@ def seed_elements() -> List[Tuple[int, int]]:
         (7, 7),
     ]
 
-
 def init_board():
     """Build an initial board based on ROWS / COLS"""
     return Board(ROWS, COLS, seed_elements())
 
 
-def main():
+def main(curses_window):
     counter = 0
     game = init_board()
 
     while not game.is_over:
         counter += 1
         game.is_over = True
-        print(game)
+        game.curses_board(curses_window)
         for i, row in enumerate(game.board):
             for j, item in enumerate(row):
                 neighbors = [
@@ -144,13 +150,11 @@ def main():
                 elif item == LIVE_SLOT and len(neighbors) <= 1:
                     game.board[i][j] = OPEN_SLOT
                     game.is_over = False
-
         time.sleep(2)
-        print("============================================================")
-
-    print("Game exited. Your score is {}.".format(counter))
+    print("Game over. Your score is {}.".format(counter))
+    time.sleep(10)
     sys.exit(0)
 
 
 if __name__ == "__main__":
-    main()
+    curses.wrapper(main)
