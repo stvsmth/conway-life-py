@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
 
+# TODO:
+# * Allow user to save initial setup (particularly good game)
+# * Allow user to manually set game setup (arrow keys, space to select, enter to start)
+
+from typing import Tuple, List, Optional
 import curses
+import random
 import sys
 import time
-from typing import Tuple, List, Optional
 
 ROWS = 8
 COLS = 8
@@ -92,36 +97,20 @@ class Board:
             return neighbor_coords
 
 
-# TODO(team): How can the seed elements be an input parameter from CLI?
-# add `--random` param to CLI to randomize board population.
-def seed_elements() -> List[Tuple[int, int]]:
-    return [
-        (0, 0),
-        (0, 1),
-        (0, 5),
-        (1, 1),
-        (1, 4),
-        (1, 6),
-        (2, 1),
-        (2, 2),
-        (2, 4),
-        (2, 6),
-        (3, 2),
-        (3, 4),
-        (4, 4),
-        (4, 5),
-        (5, 6),
-        (6, 0),
-        (6, 1),
-        (7, 3),
-        (7, 4),
-        (7, 7),
-    ]
+def random_game() -> List[Tuple[int, int]]:
+    """Start the game with a random sequence."""
+    elements = []
+    for i in range(ROWS):
+        for j in range(COLS):
+            if random.choice([True, False]):
+                elements.append((i, j))
+    return elements
 
 
 def init_board():
     """Build an initial board based on ROWS / COLS"""
-    return Board(ROWS, COLS, seed_elements())
+    # Build a blank board
+    return Board(ROWS, COLS, random_game())
 
 
 def main(curses_window):
