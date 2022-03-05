@@ -35,10 +35,10 @@ class Board:
 
         return s
 
-    def curses_board(self, curses_window):
+    def draw_board(self, curses_window):
         """Print board dynamically in-place using curses."""
         curses_window.erase()
-        curses_window.addstr(self.__repr__())
+        curses_window.addstr(str(self))
         curses_window.refresh()
 
     def get_neighbors(self, coords: Tuple[int, int]) -> List[Tuple[int, int]]:
@@ -131,7 +131,7 @@ def main(curses_window):
     while not game.is_over:
         counter += 1
         game.is_over = True
-        game.curses_board(curses_window)
+        game.draw_board(curses_window)
         for i, row in enumerate(game.board):
             for j, item in enumerate(row):
                 neighbors = [
