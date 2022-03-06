@@ -4,7 +4,6 @@
 # * Allow user to save initial setup (particularly good game)
 # * Allow user to manually set game setup (arrow keys, space to select, enter to start)
 
-from multiprocessing.dummy import current_process
 from typing import Tuple, List, Optional
 import curses
 import random
@@ -114,7 +113,7 @@ class Board:
             return neighbor_coords
 
 
-def get_random_game() -> List[Tuple[int, int]]:
+def get_random_board_seed() -> List[Tuple[int, int]]:
     """Start the game with a random sequence."""
     elements = []
     for i in range(ROWS):
@@ -123,12 +122,7 @@ def get_random_game() -> List[Tuple[int, int]]:
                 elements.append((i, j))
     return elements
 
-
-def init_board(screen, random_game=False):
-    """Build an initial board based on ROWS / COLS"""
-    if random_game:
-        return Board(ROWS, COLS, get_random_game())
-    else:
+def get_user_board_seed(screen) -> List[Tuple[int, int]]:
         game = Board(ROWS, COLS, [])
         game.draw_board(screen)
 
@@ -155,8 +149,16 @@ def init_board(screen, random_game=False):
                 if coords:
                     curr_xy = coords
 
-        screen.nodelay(0)
-        return Board(ROWS, COLS, seed)
+        screen.nodelay(0)    
+        return seed
+
+def init_board(screen, random_game=False):
+    """Build an initial board based on ROWS / COLS"""
+    if random_game:
+        seed = get_random_board_seed()
+    else:
+        seed = get_user_board_seed(screen)
+    return Board(ROWS, COLS, seed)
 
 
 def main(curses_window):
