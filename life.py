@@ -133,7 +133,6 @@ def init_board(screen, random_game=False):
         game.draw_board(screen)
 
         curr_xy = (0, 0)
-        last_xy = curr_xy
         screen.nodelay(1)
         seed = []
         while True:
@@ -149,7 +148,6 @@ def init_board(screen, random_game=False):
                 screen.move(x, y)  # `addstr` advances cursor; put it back
                 seed.append(coords)
             elif key_pressed:
-                char_to_draw = "?"
                 coords = None
                 direction = CURSES_KEY_MAP.get(key_pressed, "")
                 if direction:
