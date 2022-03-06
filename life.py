@@ -4,6 +4,7 @@
 # * Allow user to save initial setup (particularly good game)
 # * Allow user to manually set game setup (arrow keys, space to select, enter to start)
 
+from multiprocessing.dummy import current_process
 from typing import Tuple, List, Optional
 import curses
 import random
@@ -12,8 +13,23 @@ import time
 
 ROWS = 8
 COLS = 8
-OPEN_SLOT = "_ "
-LIVE_SLOT = "O "
+OPEN_SLOT = "_"
+LIVE_SLOT = "O"
+
+CURSES_KEY_MAP = {
+    # north
+    ord("k"): "n",
+    curses.KEY_UP: "n",
+    # south
+    ord("j"): "s",
+    curses.KEY_DOWN: "s",
+    # west
+    ord("h"): "w",
+    curses.KEY_LEFT: "w",
+    # east
+    ord("l"): "e",
+    curses.KEY_RIGHT: "e",
+}
 
 
 class Board:
@@ -97,7 +113,7 @@ class Board:
             return neighbor_coords
 
 
-def random_game() -> List[Tuple[int, int]]:
+def get_random_game() -> List[Tuple[int, int]]:
     """Start the game with a random sequence."""
     elements = []
     for i in range(ROWS):
@@ -107,15 +123,46 @@ def random_game() -> List[Tuple[int, int]]:
     return elements
 
 
-def init_board():
+def init_board(screen, random_game=False):
     """Build an initial board based on ROWS / COLS"""
-    # Build a blank board
-    return Board(ROWS, COLS, random_game())
+    if random_game:
+        return Board(ROWS, COLS, get_random_game())
+    else:
+        game = Board(ROWS, COLS, [])
+        game.draw_board(screen)
+
+        curr_xy = (0, 0)
+        last_xy = curr_xy
+        screen.nodelay(1)
+        seed = []
+        while True:
+            key_pressed = screen.getch()
+            x, y = curr_xy
+            screen.move(x, y)
+            if key_pressed == ord("\n"):
+                break
+            elif key_pressed == ord(" "):
+                curr_val = chr(screen.inch(y, x))
+                char_to_draw = "O" if curr_val == "_" else "_"
+                screen.addstr(x, y, char_to_draw)
+                screen.move(x, y)  # `addstr` advances cursor; put it back
+                seed.append(coords)
+            elif key_pressed:
+                char_to_draw = "?"
+                coords = None
+                direction = CURSES_KEY_MAP.get(key_pressed, "")
+                if direction:
+                    coords = game.get_inbound_coords((x, y), direction)
+                if coords:
+                    curr_xy = coords
+
+        screen.nodelay(0)
+        return Board(ROWS, COLS, seed)
 
 
 def main(curses_window):
     counter = 0
-    game = init_board()
+    game = init_board(curses_window)
 
     while not game.is_over:
         counter += 1
