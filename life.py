@@ -31,6 +31,17 @@ CURSES_KEY_MAP = {
     curses.KEY_RIGHT: "e",
 }
 
+DIRECTIONAL_MAP = {
+    "nw": (-1, -1),
+    "n": (-1, 0),
+    "ne": (-1, 1),
+    "w": (0, -1),
+    "e": (0, 1),
+    "sw": (1, -1),
+    "s": (1, 0),
+    "se": (1, 1),
+}
+
 
 class Board:
     def __init__(self, rows: int, cols: int, seed: List[Tuple[int, int]]):
@@ -85,18 +96,8 @@ class Board:
         sw 2,  0 | s 2, 1 | se  2, 2
            1, -1 |   1, 0 |     1, 1
         """
-        mp = {
-            "nw": (-1, -1),
-            "n": (-1, 0),
-            "ne": (-1, 1),
-            "w": (0, -1),
-            "e": (0, 1),
-            "sw": (1, -1),
-            "s": (1, 0),
-            "se": (1, 1),
-        }
 
-        i_mod, j_mod = mp[directional]
+        i_mod, j_mod = DIRECTIONAL_MAP[directional]
         i, j = coords
         neighbor_coords = (i + i_mod, j + j_mod)
 
