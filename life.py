@@ -15,7 +15,7 @@ COLS = 8
 OPEN_SLOT = "_"
 LIVE_SLOT = "O"
 
-CURSES_KEY_MAP = {
+KEY_MOVEMENT_MAP = {
     # north
     ord("k"): "n",
     curses.KEY_UP: "n",
@@ -40,6 +40,7 @@ DIRECTIONAL_MAP = {
     "s": (1, 0),
     "se": (1, 1),
 }
+
 
 class Board:
     def __init__(self, rows: int, cols: int, seed: List[Tuple[int, int]]):
@@ -134,10 +135,8 @@ def get_user_board_seed(screen) -> List[Tuple[int, int]]:
         x, y = curr_xy
         screen.move(x, y)
 
-        key_pressed = screen.getch()  # No key == -1
-        if key_pressed == -1:
-            continue
-        elif key_pressed == ord("\n"):
+        key_pressed = screen.getch()  # ascii code of key; -1 if none
+        if key_pressed == ord("\n"):
             break
         elif key_pressed == ord(" "):
             curr_val = chr(screen.inch(x, y))
@@ -145,11 +144,8 @@ def get_user_board_seed(screen) -> List[Tuple[int, int]]:
             screen.addstr(x, y, char_to_draw)
             screen.move(x, y)  # `addstr` advances cursor; put it back
             seed.append(curr_xy)
-        elif key_pressed > 0:
-            coords = None
-            direction = CURSES_KEY_MAP.get(key_pressed, "")
-            if direction:
-                coords = game.get_inbound_coords((x, y), direction)
+        elif direction := KEY_MOVEMENT_MAP.get(key_pressed):
+            coords = game.get_inbound_coords((x, y), direction)
             if coords:
                 curr_xy = coords
 
