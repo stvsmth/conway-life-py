@@ -41,7 +41,6 @@ DIRECTIONAL_MAP = {
     "se": (1, 1),
 }
 
-
 class Board:
     def __init__(self, rows: int, cols: int, seed: List[Tuple[int, int]]):
         self.rows = rows
@@ -145,7 +144,7 @@ def get_user_board_seed(screen) -> List[Tuple[int, int]]:
             char_to_draw = OPEN_SLOT if curr_val == LIVE_SLOT else LIVE_SLOT
             screen.addstr(x, y, char_to_draw)
             screen.move(x, y)  # `addstr` advances cursor; put it back
-            seed.append(coords)
+            seed.append(curr_xy)
         elif key_pressed > 0:
             coords = None
             direction = CURSES_KEY_MAP.get(key_pressed, "")
