@@ -2,7 +2,7 @@
 
 # TODO:
 # * Allow user to save initial setup (particularly good game)
-# * Allow user to manually set game setup (arrow keys, space to select, enter to start)
+# * Allow user to load a saved game (simple pickle of seed w/ CLI options to load)
 
 from typing import Tuple, List, Optional
 import curses
@@ -122,35 +122,41 @@ def get_random_board_seed() -> List[Tuple[int, int]]:
                 elements.append((i, j))
     return elements
 
+
 def get_user_board_seed(screen) -> List[Tuple[int, int]]:
-        game = Board(ROWS, COLS, [])
-        game.draw_board(screen)
+    game = Board(ROWS, COLS, [])
+    game.draw_board(screen)
+    screen.move(0, 0)  # rest cursor after drawing blank board
 
-        curr_xy = (0, 0)
-        screen.nodelay(1)
-        seed = []
-        while True:
-            key_pressed = screen.getch()
-            x, y = curr_xy
-            screen.move(x, y)
-            if key_pressed == ord("\n"):
-                break
-            elif key_pressed == ord(" "):
-                curr_val = chr(screen.inch(y, x))
-                char_to_draw = OPEN_SLOT if curr_val == LIVE_SLOT else LIVE_SLOT
-                screen.addstr(x, y, char_to_draw)
-                screen.move(x, y)  # `addstr` advances cursor; put it back
-                seed.append(coords)
-            elif key_pressed:
-                coords = None
-                direction = CURSES_KEY_MAP.get(key_pressed, "")
-                if direction:
-                    coords = game.get_inbound_coords((x, y), direction)
-                if coords:
-                    curr_xy = coords
+    curr_xy = (0, 0)
+    screen.nodelay(1)
+    seed = []
+    while True:
+        x, y = curr_xy
+        screen.move(x, y)
 
-        screen.nodelay(0)    
-        return seed
+        key_pressed = screen.getch()  # No key == -1
+        if key_pressed == -1:
+            continue
+        elif key_pressed == ord("\n"):
+            break
+        elif key_pressed == ord(" "):
+            curr_val = chr(screen.inch(x, y))
+            char_to_draw = OPEN_SLOT if curr_val == LIVE_SLOT else LIVE_SLOT
+            screen.addstr(x, y, char_to_draw)
+            screen.move(x, y)  # `addstr` advances cursor; put it back
+            seed.append(coords)
+        elif key_pressed > 0:
+            coords = None
+            direction = CURSES_KEY_MAP.get(key_pressed, "")
+            if direction:
+                coords = game.get_inbound_coords((x, y), direction)
+            if coords:
+                curr_xy = coords
+
+    screen.nodelay(0)
+    return seed
+
 
 def init_board(screen, random_game=False):
     """Build an initial board based on ROWS / COLS"""
