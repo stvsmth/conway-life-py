@@ -144,7 +144,7 @@ def init_board(screen, random_game=False):
                 break
             elif key_pressed == ord(" "):
                 curr_val = chr(screen.inch(y, x))
-                char_to_draw = "O" if curr_val == "_" else "_"
+                char_to_draw = OPEN_SLOT if curr_val == LIVE_SLOT else LIVE_SLOT
                 screen.addstr(x, y, char_to_draw)
                 screen.move(x, y)  # `addstr` advances cursor; put it back
                 seed.append(coords)
