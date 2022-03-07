@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 
 # TODO:
-# * Allow user to save initial setup (particularly good game)
-# * Allow user to load a saved game (simple pickle of seed w/ CLI options to load)
+# * Save a game, load it from disk
+# * Pass in options to choose random vs user
+# * Maybe allow a user to modify a randomly seeded board
+# * Take a look at the types
 
 from typing import Tuple, List, Optional
 import curses
