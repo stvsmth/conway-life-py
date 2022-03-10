@@ -1,14 +1,47 @@
 #!/usr/bin/env python3
 
+# TODO:
+# * Save a game, load it from disk
+# * Pass in options to choose random vs user
+# * Maybe allow a user to modify a randomly seeded board
+# * Take a look at the types
+
+from typing import Tuple, List, Optional
 import curses
+import random
 import sys
 import time
-from typing import Tuple, List, Optional
 
 ROWS = 8
 COLS = 8
-OPEN_SLOT = "_ "
-LIVE_SLOT = "O "
+OPEN_SLOT = "_"
+LIVE_SLOT = "O"
+
+KEY_MOVEMENT_MAP = {
+    # north
+    ord("k"): "n",
+    curses.KEY_UP: "n",
+    # south
+    ord("j"): "s",
+    curses.KEY_DOWN: "s",
+    # west
+    ord("h"): "w",
+    curses.KEY_LEFT: "w",
+    # east
+    ord("l"): "e",
+    curses.KEY_RIGHT: "e",
+}
+
+DIRECTIONAL_MAP = {
+    "nw": (-1, -1),
+    "n": (-1, 0),
+    "ne": (-1, 1),
+    "w": (0, -1),
+    "e": (0, 1),
+    "sw": (1, -1),
+    "s": (1, 0),
+    "se": (1, 1),
+}
 
 
 class Board:
@@ -64,18 +97,8 @@ class Board:
         sw 2,  0 | s 2, 1 | se  2, 2
            1, -1 |   1, 0 |     1, 1
         """
-        mp = {
-            "nw": (-1, -1),
-            "n": (-1, 0),
-            "ne": (-1, 1),
-            "w": (0, -1),
-            "e": (0, 1),
-            "sw": (1, -1),
-            "s": (1, 0),
-            "se": (1, 1),
-        }
 
-        i_mod, j_mod = mp[directional]
+        i_mod, j_mod = DIRECTIONAL_MAP[directional]
         i, j = coords
         neighbor_coords = (i + i_mod, j + j_mod)
 
@@ -92,41 +115,58 @@ class Board:
             return neighbor_coords
 
 
-# TODO(team): How can the seed elements be an input parameter from CLI?
-# add `--random` param to CLI to randomize board population.
-def seed_elements() -> List[Tuple[int, int]]:
-    return [
-        (0, 0),
-        (0, 1),
-        (0, 5),
-        (1, 1),
-        (1, 4),
-        (1, 6),
-        (2, 1),
-        (2, 2),
-        (2, 4),
-        (2, 6),
-        (3, 2),
-        (3, 4),
-        (4, 4),
-        (4, 5),
-        (5, 6),
-        (6, 0),
-        (6, 1),
-        (7, 3),
-        (7, 4),
-        (7, 7),
-    ]
+def get_random_board_seed() -> List[Tuple[int, int]]:
+    """Start the game with a random sequence."""
+    elements = []
+    for i in range(ROWS):
+        for j in range(COLS):
+            if random.choice([True, False]):
+                elements.append((i, j))
+    return elements
 
 
-def init_board():
+def get_user_board_seed(screen) -> List[Tuple[int, int]]:
+    game = Board(ROWS, COLS, [])
+    game.draw_board(screen)
+    screen.move(0, 0)  # rest cursor after drawing blank board
+
+    curr_xy = (0, 0)
+    screen.nodelay(1)
+    seed = []
+    while True:
+        x, y = curr_xy
+        screen.move(x, y)
+
+        key_pressed = screen.getch()  # ascii code of key; -1 if none
+        if key_pressed == ord("\n"):
+            break
+        elif key_pressed == ord(" "):
+            curr_val = chr(screen.inch(x, y))
+            char_to_draw = OPEN_SLOT if curr_val == LIVE_SLOT else LIVE_SLOT
+            screen.addstr(x, y, char_to_draw)
+            screen.move(x, y)  # `addstr` advances cursor; put it back
+            seed.append(curr_xy)
+        elif direction := KEY_MOVEMENT_MAP.get(key_pressed):
+            coords = game.get_inbound_coords((x, y), direction)
+            if coords:
+                curr_xy = coords
+
+    screen.nodelay(0)
+    return seed
+
+
+def init_board(screen, random_game=False):
     """Build an initial board based on ROWS / COLS"""
-    return Board(ROWS, COLS, seed_elements())
+    if random_game:
+        seed = get_random_board_seed()
+    else:
+        seed = get_user_board_seed(screen)
+    return Board(ROWS, COLS, seed)
 
 
 def main(curses_window):
     counter = 0
-    game = init_board()
+    game = init_board(curses_window)
 
     while not game.is_over:
         counter += 1
