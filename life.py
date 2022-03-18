@@ -12,10 +12,10 @@ import random
 import sys
 import time
 
-ROWS = 8
-COLS = 8
-OPEN_SLOT = "_"
-LIVE_SLOT = "O"
+ROWS = 12 
+COLS = 18
+DEAD = "_"
+ALIVE = "█"
 
 KEY_MOVEMENT_MAP = {
     # north
@@ -50,16 +50,17 @@ class Board:
         self.cols = cols
         self.seed = seed
         self.board = []
+        self.new_board = []
         self.is_over = False
 
         # Build a blank game board
         for _ in range(rows):
-            self.board.append([OPEN_SLOT for _ in range(cols)])
+            self.board.append([DEAD for _ in range(cols)])
 
         # Add the initial game state of living cells
         for coords in self.seed:
             i, j = coords
-            self.board[i][j] = LIVE_SLOT
+            self.board[i][j] = ALIVE
 
     def __repr__(self):
         s = ""
@@ -74,13 +75,16 @@ class Board:
         curses_window.addstr(str(self))
         curses_window.refresh()
 
-    def get_neighbors(self, coords: Tuple[int, int]) -> List[Tuple[int, int]]:
-        """Looks at neighbors in 9x9 grid and returns i, j coords for non-null neighbors"""
+    def get_live_neighbors(self, coords: Tuple[int, int]) -> List[Tuple[int, int]]:
+        """Looks at neighbors in 9x9 grid and returns i, j coords for all live neighbors"""
         neighbors = []
+
         for direction in ["nw", "n", "ne", "w", "e", "sw", "s", "se"]:
             neighbor = self.get_inbound_coords(coords, direction)
             if neighbor:
-                neighbors.append(neighbor)
+                i, j = neighbor
+                if self.board[i][j] == ALIVE:
+                    neighbors.append(neighbor)
         return neighbors
 
     def get_inbound_coords(
@@ -106,8 +110,8 @@ class Board:
             [
                 neighbor_coords[0] < 0,
                 neighbor_coords[1] < 0,
-                neighbor_coords[0] > ROWS - 1,
-                neighbor_coords[1] > COLS - 1,
+                neighbor_coords[0] > self.rows - 1,
+                neighbor_coords[1] > self.cols - 1,
             ]
         ):
             return None
@@ -142,7 +146,7 @@ def get_user_board_seed(screen) -> List[Tuple[int, int]]:
             break
         elif key_pressed == ord(" "):
             curr_val = chr(screen.inch(x, y))
-            char_to_draw = OPEN_SLOT if curr_val == LIVE_SLOT else LIVE_SLOT
+            char_to_draw = DEAD if curr_val == ALIVE else ALIVE
             screen.addstr(x, y, char_to_draw)
             screen.move(x, y)  # `addstr` advances cursor; put it back
             seed.append(curr_xy)
@@ -154,8 +158,7 @@ def get_user_board_seed(screen) -> List[Tuple[int, int]]:
     screen.nodelay(0)
     return seed
 
-
-def init_board(screen, random_game=False):
+def seed_initial_board(screen, random_game=False):
     """Build an initial board based on ROWS / COLS"""
     if random_game:
         seed = get_random_board_seed()
@@ -166,36 +169,56 @@ def init_board(screen, random_game=False):
 
 def main(curses_window):
     counter = 0
-    game = init_board(curses_window)
+    is_random = len(sys.argv) > 1 and sys.argv[1] == "random"
+    game = seed_initial_board(curses_window, random_game=is_random)
 
     while not game.is_over:
         counter += 1
         game.is_over = True
         game.draw_board(curses_window)
+
+        # Build the off-screen board to compute live/dead cells
+        game.new_board = []
+        for _ in range(game.rows):
+            game.new_board.append([DEAD for _ in range(game.cols)])
+
         for i, row in enumerate(game.board):
             for j, item in enumerate(row):
-                neighbors = [
-                    game.board[x][y]
-                    for x, y in game.get_neighbors((i, j))
-                    if game.board[x][y] == LIVE_SLOT
-                ]
+                num_neighbors = len(
+                    [
+                        game.board[x][y]
+                        for x, y in game.get_live_neighbors((i, j))
+                        if game.board[x][y] == ALIVE
+                    ]
+                )
+
                 # A dead cell has exactly 3 neighbors => toggle to alive
-                if item == OPEN_SLOT and len(neighbors) == 3:
-                    game.board[i][j] = LIVE_SLOT
+                if item == DEAD and num_neighbors == 3:
+                    game.new_board[i][j] = ALIVE
                     game.is_over = False
                 # A living cell has 4 or more neighbors => toggle to dead
-                elif item == LIVE_SLOT and len(neighbors) >= 4:
-                    game.board[i][j] = OPEN_SLOT
+                elif item == ALIVE and num_neighbors >= 4:
+                    game.new_board[i][j] = DEAD
                     game.is_over = False
                 # When a living cell has 1 or fewer neighbors => toggle to dead
-                elif item == LIVE_SLOT and len(neighbors) <= 1:
-                    game.board[i][j] = OPEN_SLOT
+                elif item == ALIVE and num_neighbors <= 1:
+                    game.new_board[i][j] = DEAD
                     game.is_over = False
-        time.sleep(2)
+                else:
+                    game.new_board[i][j] = item
+
+        # Copy over the new board for next loop
+        game.board = game.new_board.copy()
+        time.sleep(0.3)
+
+    # Print out score, sleep before we restore the terminal defaults
     print("Game over. Your score is {}.".format(counter))
-    time.sleep(10)
+    time.sleep(3)
     sys.exit(0)
 
 
 if __name__ == "__main__":
-    curses.wrapper(main)
+    try:
+        curses.wrapper(main)
+    except KeyboardInterrupt:
+        sys.exit(0)
