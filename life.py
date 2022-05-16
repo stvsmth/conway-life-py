@@ -12,8 +12,8 @@ import random
 import sys
 import time
 
-ROWS = 12 
-COLS = 18
+ROWS = 20
+COLS = 80
 DEAD = "_"
 ALIVE = "█"
 
@@ -74,6 +74,7 @@ class Board:
         curses_window.erase()
         curses_window.addstr(str(self))
         curses_window.refresh()
+        curses.curs_set(0)
 
     def get_live_neighbors(self, coords: Tuple[int, int]) -> List[Tuple[int, int]]:
         """Looks at neighbors in 9x9 grid and returns i, j coords for all live neighbors"""
@@ -132,6 +133,7 @@ def get_random_board_seed() -> List[Tuple[int, int]]:
 def get_user_board_seed(screen) -> List[Tuple[int, int]]:
     game = Board(ROWS, COLS, [])
     game.draw_board(screen)
+    curses.curs_set(2)
     screen.move(0, 0)  # rest cursor after drawing blank board
 
     curr_xy = (0, 0)
@@ -156,7 +158,9 @@ def get_user_board_seed(screen) -> List[Tuple[int, int]]:
                 curr_xy = coords
 
     screen.nodelay(0)
+    curses.curs_set(0)
     return seed
+
 
 def seed_initial_board(screen, random_game=False):
     """Build an initial board based on ROWS / COLS"""
