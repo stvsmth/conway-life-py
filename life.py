@@ -50,7 +50,7 @@ class Board:
         self.cols = cols
         self.seed = seed
         self.board = []
-        self.new_board = []
+        self.next_board = []
         self.is_over = False
 
         # Build a blank game board
@@ -182,9 +182,9 @@ def main(curses_window):
         game.draw_board(curses_window)
 
         # Build the off-screen board to compute live/dead cells
-        game.new_board = []
+        game.next_board = []
         for _ in range(game.rows):
-            game.new_board.append([DEAD for _ in range(game.cols)])
+            game.next_board.append([DEAD for _ in range(game.cols)])
 
         for i, row in enumerate(game.board):
             for j, item in enumerate(row):
@@ -198,21 +198,21 @@ def main(curses_window):
 
                 # A dead cell has exactly 3 neighbors => toggle to alive
                 if item == DEAD and num_neighbors == 3:
-                    game.new_board[i][j] = ALIVE
+                    game.next_board[i][j] = ALIVE
                     game.is_over = False
                 # A living cell has 4 or more neighbors => toggle to dead
                 elif item == ALIVE and num_neighbors >= 4:
-                    game.new_board[i][j] = DEAD
+                    game.next_board[i][j] = DEAD
                     game.is_over = False
                 # When a living cell has 1 or fewer neighbors => toggle to dead
                 elif item == ALIVE and num_neighbors <= 1:
-                    game.new_board[i][j] = DEAD
+                    game.next_board[i][j] = DEAD
                     game.is_over = False
                 else:
-                    game.new_board[i][j] = item
+                    game.next_board[i][j] = item
 
         # Copy over the new board for next loop
-        game.board = game.new_board.copy()
+        game.board = game.next_board.copy()
         time.sleep(0.3)
 
     # Print out score, sleep before we restore the terminal defaults
