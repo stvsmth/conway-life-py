@@ -5,6 +5,7 @@
 # * Pass in options to choose random vs user
 # * Maybe allow a user to modify a randomly seeded board
 # * Take a look at the types
+# * Actually check out type hints.
 
 from typing import Tuple, List, Optional
 import curses
@@ -12,8 +13,6 @@ import random
 import sys
 import time
 
-ROWS = 20
-COLS = 80
 DEAD = "_"
 ALIVE = "█"
 
@@ -120,18 +119,31 @@ class Board:
             return neighbor_coords
 
 
-def get_random_board_seed() -> List[Tuple[int, int]]:
+def get_rows_cols(screen) -> Tuple[int, int]:
+    """Get the rows (height) and cols (width) of the provided screen.
+
+    Be sure we trim one element from each dimension as addch/addstr will
+    advance the cursor past what was printed.
+    """
+    rows, cols = screen.getmaxyx()
+    return rows - 1, cols - 1
+
+
+def get_random_board_seed(screen) -> List[Tuple[int, int]]:
     """Start the game with a random sequence."""
     elements = []
-    for i in range(ROWS):
-        for j in range(COLS):
+    rows, cols = get_rows_cols(screen)
+    for i in range(rows):
+        for j in range(cols):
             if random.choice([True, False]):
                 elements.append((i, j))
-    return elements
+    return elements, rows, cols
 
 
 def get_user_board_seed(screen) -> List[Tuple[int, int]]:
-    game = Board(ROWS, COLS, [])
+    """Display blank board, let user seed initial values via curses."""
+    rows, cols = get_rows_cols(screen)
+    game = Board(rows, cols, [])
     game.draw_board(screen)
     curses.curs_set(2)
     screen.move(0, 0)  # rest cursor after drawing blank board
@@ -163,12 +175,12 @@ def get_user_board_seed(screen) -> List[Tuple[int, int]]:
 
 
 def seed_initial_board(screen, random_game=False):
-    """Build an initial board based on ROWS / COLS"""
+    """Build an initial board based on existing terminal size"""
     if random_game:
-        seed = get_random_board_seed()
+        seed, rows, cols = get_random_board_seed(screen)
     else:
-        seed = get_user_board_seed(screen)
-    return Board(ROWS, COLS, seed)
+        seed, rows, cols = get_user_board_seed(screen)
+    return Board(rows, cols, seed)
 
 
 def main(curses_window):
